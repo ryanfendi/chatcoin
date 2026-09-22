@@ -137,14 +137,28 @@ snapshot.forEach((doc)=>{
 
 const data = doc.data();
 
+const mine =
+data.name === currentUser.displayName;
+
 messages.innerHTML += `
-<div class="message">
+
+<div class="
+message
+${mine ? 'mine' : ''}
+">
+
 <b>${data.name}</b><br>
 ${data.text}
+
 </div>
+
 `;
 
 });
 
+messages.scrollTop =
+messages.scrollHeight;
+
 });
+
 }
