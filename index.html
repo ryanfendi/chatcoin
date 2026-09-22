@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChatCoin Lite</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script type="module" src="firebase-config.js"></script>
+<script type="module" src="app.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>💬 ChatCoin Lite</h1>
+</header>
+
+<div id="loginBox">
+    <button id="loginBtn">
+        Login dengan Google
+    </button>
+</div>
+
+<div id="app" style="display:none">
+
+    <div class="user-info">
+        <img id="avatar" width="50">
+        <h3 id="username"></h3>
+        <p>Coin: <span id="coin">0</span></p>
+    </div>
+
+    <div class="reward">
+        <button id="claimCoin">
+            Klaim Coin Harian
+        </button>
+    </div>
+
+    <div class="chat-box">
+
+        <div id="messages"></div>
+
+        <input
+            type="text"
+            id="messageInput"
+            placeholder="Tulis pesan..."
+        >
+
+        <button id="sendBtn">
+            Kirim
+        </button>
+
+    </div>
+
+</div>
+
+</body>
+</html>
