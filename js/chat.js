@@ -5,9 +5,11 @@ collection,
 getDocs,
 addDoc,
 query,
-where,
 onSnapshot,
-orderBy
+orderBy,
+doc,
+setDoc,
+getDoc
 }
 from
 "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
@@ -18,147 +20,259 @@ let currentRoom = null;
 
 auth.onAuthStateChanged(async(user)=>{
 
-if(!user){
-location.href="index.html";
-return;
+    if(!user){
+        location.href="index.html";
+        return;
+    }
+
+    currentUser = user;
+
+    await updateMyStatus(true);
+
+    loadUsers();
+
+});
+
+async function updateMyStatus(online){
+
+    await setDoc(
+        doc(db,"users",currentUser.uid),
+        {
+            name: currentUser.displayName,
+            email: currentUser.email,
+            photo: currentUser.photoURL,
+            online: online,
+            lastSeen: Date.now()
+        },
+        { merge:true }
+    );
+
 }
 
-currentUser = user;
+window.addEventListener("beforeunload", async ()=>{
 
-loadUsers();
+    if(!currentUser) return;
+
+    await updateMyStatus(false);
 
 });
 
 async function loadUsers(){
 
-const snapshot =
-await getDocs(collection(db,"users"));
+    const snapshot =
+    await getDocs(collection(db,"users"));
 
-const userList =
-document.getElementById("userList");
+    const userList =
+    document.getElementById("userList");
 
-userList.innerHTML="";
+    userList.innerHTML="";
 
-snapshot.forEach(docu=>{
+    snapshot.forEach(docu=>{
 
-const data = docu.data();
+        const data = docu.data();
 
-if(docu.id===currentUser.uid) return;
+        if(docu.id===currentUser.uid) return;
 
-const div =
-document.createElement("div");
+        const div =
+        document.createElement("div");
 
-div.className="user";
+        div.className="user";
 
-div.innerText =
-data.name || "Pengguna";
+        let statusText = "";
 
-div.onclick=()=>{
-openChat(docu.id,data.name);
-};
+        if(data.online){
+            statusText = "🟢 Online";
+        }else{
+            statusText =
+            "Terakhir aktif " +
+            timeAgo(data.lastSeen || Date.now());
+        }
 
-userList.appendChild(div);
+        div.innerHTML = `
+            <b>${data.name || "Pengguna"}</b>
+            <br>
+            <small>${statusText}</small>
+        `;
 
-});
+        div.onclick=()=>{
+            openChat(docu.id,data.name);
+        };
+
+        userList.appendChild(div);
+
+    });
 
 }
 
 async function openChat(uid,name){
 
-selectedUser = uid;
+    selectedUser = uid;
 
-document.getElementById(
-"chatHeader"
-).innerText=name;
+    document.getElementById(
+    "chatHeader"
+    ).innerHTML = `
+        <div>
+            <b>${name}</b>
+            <div id="userStatus">
+                Memuat...
+            </div>
+        </div>
+    `;
 
-currentRoom =
-[currentUser.uid,uid]
-.sort()
-.join("_");
+    currentRoom =
+    [currentUser.uid,uid]
+    .sort()
+    .join("_");
 
-listenMessages();
+    listenMessages();
+
+    listenUserStatus(uid);
+
+}
+
+function listenUserStatus(uid){
+
+    onSnapshot(
+        doc(db,"users",uid),
+        (snapshot)=>{
+
+            if(!snapshot.exists()) return;
+
+            const data =
+            snapshot.data();
+
+            const status =
+            document.getElementById(
+            "userStatus"
+            );
+
+            if(!status) return;
+
+            if(data.online){
+
+                status.innerHTML =
+                "🟢 Online";
+
+            }else{
+
+                status.innerHTML =
+                "Terakhir aktif " +
+                timeAgo(
+                    data.lastSeen
+                );
+
+            }
+
+        }
+    );
 
 }
 
 function listenMessages(){
 
-const q =
-query(
-collection(
-db,
-"rooms",
-currentRoom,
-"messages"
-),
-orderBy("time")
-);
+    const q =
+    query(
+        collection(
+            db,
+            "rooms",
+            currentRoom,
+            "messages"
+        ),
+        orderBy("time")
+    );
 
-onSnapshot(q,(snapshot)=>{
+    onSnapshot(q,(snapshot)=>{
 
-const messages =
-document.getElementById("messages");
+        const messages =
+        document.getElementById("messages");
 
-messages.innerHTML="";
+        messages.innerHTML="";
 
-snapshot.forEach(docu=>{
+        snapshot.forEach(docu=>{
 
-const data =
-docu.data();
+            const data =
+            docu.data();
 
-const div =
-document.createElement("div");
+            const div =
+            document.createElement("div");
 
-div.className =
-data.sender===currentUser.uid
-? "message mine"
-: "message";
+            div.className =
+            data.sender===currentUser.uid
+            ? "message mine"
+            : "message";
 
-div.innerHTML =
-data.text;
+            div.innerHTML =
+            data.text;
 
-messages.appendChild(div);
+            messages.appendChild(div);
 
-});
+        });
 
-messages.scrollTop=
-messages.scrollHeight;
+        messages.scrollTop =
+        messages.scrollHeight;
 
-});
+    });
 
 }
 
 document
 .getElementById("sendBtn")
-.onclick=async()=>{
+.onclick = async ()=>{
 
-if(!currentRoom) return;
+    if(!currentRoom) return;
 
-const text =
-document.getElementById(
-"messageInput"
-).value;
+    const text =
+    document.getElementById(
+    "messageInput"
+    ).value;
 
-if(text.trim()==="") return;
+    if(text.trim()==="") return;
 
-await addDoc(
+    await addDoc(
 
-collection(
-db,
-"rooms",
-currentRoom,
-"messages"
-),
+        collection(
+            db,
+            "rooms",
+            currentRoom,
+            "messages"
+        ),
 
-{
-sender:currentUser.uid,
-text:text,
-time:Date.now()
-}
+        {
+            sender: currentUser.uid,
+            text: text,
+            time: Date.now()
+        }
 
-);
+    );
 
-document.getElementById(
-"messageInput"
-).value="";
+    document.getElementById(
+    "messageInput"
+    ).value="";
 
 };
+
+function timeAgo(timestamp){
+
+    if(!timestamp)
+        return "baru saja";
+
+    const seconds =
+    Math.floor(
+        (Date.now()-timestamp)/1000
+    );
+
+    if(seconds < 60)
+        return "baru saja";
+
+    if(seconds < 3600)
+        return Math.floor(seconds/60)
+        + " menit lalu";
+
+    if(seconds < 86400)
+        return Math.floor(seconds/3600)
+        + " jam lalu";
+
+    return Math.floor(seconds/86400)
+    + " hari lalu";
+
+}
