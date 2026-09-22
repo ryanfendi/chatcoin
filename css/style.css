@@ -125,3 +125,25 @@ background:white;
 flex:1;
 padding:10px;
 }
+
+#userStatus{
+font-size:12px;
+opacity:.8;
+margin-top:2px;
+}
+
+.user small{
+color:#666;
+}
+
+.mine{
+background:#A5F5A5;
+margin-left:auto;
+}
+
+.message{
+padding:8px;
+border-radius:8px;
+margin:5px;
+max-width:70%;
+}
