@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Private Chat</title>
+<link rel="stylesheet" href="style.css">
+
+<script type="module" src="chat.js"></script>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="sidebar">
+        <h2>Kontak</h2>
+        <div id="userList"></div>
+    </div>
+
+    <div class="chat-area">
+
+        <div id="chatHeader">
+            Pilih pengguna
+        </div>
+
+        <div id="messages"></div>
+
+        <div class="input-area">
+            <input
+                type="text"
+                id="messageInput"
+                placeholder="Tulis pesan..."
+            >
+            <button id="sendBtn">
+                Kirim
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
